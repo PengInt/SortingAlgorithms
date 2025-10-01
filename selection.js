@@ -14,10 +14,14 @@ function playTone(frequency, duration) {
   oscillator.start();
 
   setTimeout(
-    function() {
-      oscillator.stop();
-    }, duration);
+	function() {
+	  oscillator.stop();
+	}, duration);
 }
+
+var tries = 0;
+
+var times = 0.5
 
 const areArraysEqual = (arr1, arr2) => {
   if (arr1.length !== arr2.length) {
@@ -32,8 +36,16 @@ var cSize = 4;
 var size = cSize;
 
 function start() {
+	times *= 2;
+	if (times > 16) {
+		times = 16;
+	}
 	array = [];
 	size = cSize;
+	if (size == 0) {
+		console.warn("WHAT THE FUCK")
+		return;
+	}
 	for (let i = 1; i <= size; i++) {
 		array.push(i);
 	}
@@ -53,10 +65,11 @@ function start() {
 		  array[currentIndex],
 		];
 	}
-	
+
 	cSize *= 2;
 	checking = 0
-	highest = size;
+	tries = 0;
+	highest = 0;
 	keepInMind = [];
 	requestAnimationFrame(update);
 }
@@ -71,20 +84,31 @@ function doTheCool(i) {
 	playTone(10 * array[i] * 300 / size, 2);
 	ctx.fillStyle = 'rgb(0, 255, 0)';
 	ctx.fillRect(i * cvs.width / size, cvs.height - array[i] / size * cvs.height, cvs.width / size, array[i] / size * cvs.height)
-	setTimeout(() => {
+	if (i % times == 0) {
+		setTimeout(() => {
+			if (i < size - 1) {
+				doTheCool(i + 1);
+			} else {
+				setTimeout(() => { start() }, 250);
+			}
+		}, 10);
+	} else {
 		if (i < size - 1) {
-			doTheCool(i + 1)
+			doTheCool(i + 1);
 		} else {
 			setTimeout(() => { start() }, 250);
 		}
-	}, 10)
+	}
 }
 
 var keepInMind = [];
 
-var tries = 0;
-
-const times = 4
+function swap(i, j) {
+	let temp = array[i];
+	array[i] = array[j];
+	array[j] = temp;
+	return;
+}
 
 function update() {
 	tries++;
@@ -97,60 +121,31 @@ function update() {
 		}
 		ctx.fillRect(i * cvs.width / size, cvs.height - array[i] / size * cvs.height, cvs.width / size, array[i] / size * cvs.height);
 	}
-	if (checking == 0) {
-		if (array[0] > array[1]) {
-			let temp = array[0];
-			array[0] = array[1];
-			array[1] = temp;
-		}
-	} else if (checking == size - 1) {
-		if (array[size - 1] < array[size - 2]) {
-			let temp = array[size - 1];
-			array[size - 1] = array[size - 2];
-			array[size - 2] = temp;
-		} else {
-			highest--;
-		}
-	} else {
-		if (array[checking] > array[checking + 1]) {
-			let temp = array[checking];
-			array[checking] = array[checking + 1];
-			array[checking + 1] = temp;
-		} else if (array[checking] < array[checking - 1]) {
-			let temp = array[checking];
-			array[checking] = array[checking - 1];
-			array[checking - 1] = temp;
-		} else if (checking == highest - 1) {
-			highest--;
-		} else {
-			if (!keepInMind.includes(checking)) {
-				keepInMind.push(checking);
-			}
-		}
+	if (array[checking] != checking + 1) {
+		playTone(10 * array[checking] * 300 / size, 2);
+		swap(checking, array[checking] - 1);
 	}
-	playTone(10 * array[checking] * 300 / size, 2);
+	if (size == 0) {
+		console.warn("WHAT THE FUCK")
+	}
 	checking++;
-	if (checking >= highest) {
-		if (keepInMind.length == 0) {
-			checking = 0;
-		} else {
-			checking = keepInMind[keepInMind.length - 1];
-		}
-		keepInMind.pop();
+	if (checking >= size) {
+		checking = highest + 1;
 	}
-	if (highest <= 1) {
-		let tempArray = [...array];
-		tempArray.sort((a, b) => a - b);
-		if (areArraysEqual(array, tempArray)) {
-			doTheCool(0);
-			console.log("done", tries);
-		} else {
-			if (tries % times == 0) {
-				setTimeout(update, 1);
-			} else {
-				update();
+	let tempArray = [...array];
+	tempArray.sort((a, b) => a - b);
+	if (areArraysEqual(array, tempArray)) {
+		ctx.fillStyle = 'rgb(0, 0, 0)';
+		ctx.fillRect(0, 0, cvs.width, cvs.height);
+		for (let i = 0; i < array.length; i++) {
+			ctx.fillStyle = 'rgb(255, 255, 255)';
+			if (i == checking) {
+				ctx.fillStyle = 'rgb(255, 0, 0)';
 			}
+			ctx.fillRect(i * cvs.width / size, cvs.height - array[i] / size * cvs.height, cvs.width / size, array[i] / size * cvs.height);
 		}
+		doTheCool(0);
+		console.log("done", tries);
 	} else {
 		if (tries % times == 0) {
 			setTimeout(update, 1);
