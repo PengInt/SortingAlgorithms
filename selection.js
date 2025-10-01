@@ -124,6 +124,7 @@ function update() {
 	if (array[checking] != checking + 1) {
 		playTone(10 * array[checking] * 300 / size, 2);
 		swap(checking, array[checking] - 1);
+		playTone(10 * array[checking] * 300 / size, 2);
 	}
 	if (size == 0) {
 		console.warn("WHAT THE FUCK")
