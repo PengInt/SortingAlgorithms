@@ -5,18 +5,21 @@ cvs.height = window.innerHeight;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playTone(frequency, duration) {
-  // create Oscillator node
-  var oscillator = audioCtx.createOscillator();
-
-  oscillator.type = 'square';
-  oscillator.frequency.value = frequency; // value in hertz
-  oscillator.connect(audioCtx.destination);
-  oscillator.start();
-
-  setTimeout(
-	function() {
-	  oscillator.stop();
-	}, duration);
+	if (frequency >= 501) {
+		console.warn("WHY THE EVERLIVING FUCK IS THE FREQUENCY", frequency)
+	}
+	// create Oscillator node
+	var oscillator = audioCtx.createOscillator();
+	
+	oscillator.type = 'square';
+	oscillator.frequency.value = frequency; // value in hertz
+	oscillator.connect(audioCtx.destination);
+	oscillator.start();
+	
+	setTimeout(
+		function() {
+			oscillator.stop();
+		}, duration);
 }
 
 var tries = 0;
@@ -70,7 +73,7 @@ function start() {
 	checking = 0
 	tries = 0;
 	highest = 0;
-	keepInMind = [];
+	keepInMind = [...array].sort((a, b) => a - b);
 	requestAnimationFrame(update);
 }
 
@@ -78,10 +81,16 @@ var checking = 0;
 
 var highest = size;
 
+var keepInMind = [];
+
+function nextN(n) {
+	return keepInMind.sort((a, b) => a - b)[0]
+}
+
 start();
 
 function doTheCool(i) {
-	playTone(10 * array[i] * 300 / size, 2);
+	playTone(100 + array[i] * 300 / size, 2);
 	ctx.fillStyle = 'rgb(0, 255, 0)';
 	ctx.fillRect(i * cvs.width / size, cvs.height - array[i] / size * cvs.height, cvs.width / size, array[i] / size * cvs.height)
 	if (i % times == 0) {
@@ -101,8 +110,6 @@ function doTheCool(i) {
 	}
 }
 
-var keepInMind = [];
-
 function swap(i, j) {
 	let temp = array[i];
 	array[i] = array[j];
@@ -110,7 +117,12 @@ function swap(i, j) {
 	return;
 }
 
+function remove(n) {
+	keepInMind.splice(keepInMind.indexOf(n), 1);
+}
+
 function update() {
+	let didntDoAnything = true;
 	tries++;
 	ctx.fillStyle = 'rgb(0, 0, 0)';
 	ctx.fillRect(0, 0, cvs.width, cvs.height);
@@ -122,16 +134,21 @@ function update() {
 		ctx.fillRect(i * cvs.width / size, cvs.height - array[i] / size * cvs.height, cvs.width / size, array[i] / size * cvs.height);
 	}
 	if (array[checking] != checking + 1) {
-		playTone(10 * array[checking] * 300 / size, 2);
+		playTone(100 + array[checking] * 300 / size, 2);
+		remove(array[checking]);
 		swap(checking, array[checking] - 1);
-		playTone(10 * array[checking] * 300 / size, 2);
+		playTone(100 + array[checking] * 300 / size, 2);
+		didntDoAnything = false;
+	}
+	console.warn(didntDoAnything)
+	if (didntDoAnything) {
+		remove(array[checking]);
 	}
 	if (size == 0) {
 		console.warn("WHAT THE FUCK")
 	}
-	checking++;
-	if (checking >= size) {
-		checking = highest + 1;
+	if (didntDoAnything) {
+		checking = nextN(checking + 1) - 1;
 	}
 	let tempArray = [...array];
 	tempArray.sort((a, b) => a - b);
